@@ -1,0 +1,17 @@
+[Unit]
+Description=Claudesite Celery Worker (host, Claude CLI access)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/claudesite-orchestrator
+EnvironmentFile=/root/claudesite-orchestrator/.env.worker
+Environment=PATH=/root/claudesite-orchestrator/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=/root/claudesite-orchestrator/.venv/bin/celery -A app.workers.celery_app worker -l INFO --concurrency=6
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

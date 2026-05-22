@@ -1,0 +1,25 @@
+/*
+ * Tailwind base + utilities + bespoke theme.
+ *
+ * Claude MUST write `src/theme.css` per-build with the brief's palette +
+ * fonts (HSL components in :root). It's imported below UNCONDITIONALLY so
+ * the variables are guaranteed to load. If Claude doesn't write theme.css,
+ * Vite build fails on unresolved import — that's intentional (fail-loud >
+ * silent broken styling).
+ *
+ * CSS spec requires `@import` rules BEFORE any other rules, hence the
+ * order below: theme.css imports first, then @tailwind directives.
+ *
+ * The Tailwind config (tailwind.config.ts) references `hsl(var(--background))`,
+ * `hsl(var(--foreground))`, `hsl(var(--primary))`, `hsl(var(--accent))`,
+ * `hsl(var(--muted))`, `hsl(var(--border))`, `hsl(var(--card))`,
+ * `hsl(var(--ring))`, `hsl(var(--input))`, `hsl(var(--destructive))`,
+ * plus `var(--radius)`, `var(--font-display)`, `var(--font-body)`,
+ * `var(--font-mark)`. ALL of these MUST be defined in theme.css.
+ */
+
+@import "./theme.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

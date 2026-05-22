@@ -1,0 +1,98 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: build/Dockerfile
+    container_name: claudesite-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ./sites:/app/sites:ro
+      - ./static:/app/static:ro
+      - /var/www:/var/www:ro
+      - /var/claudesite/sites:/var/claudesite/sites:rw
+
+  worker:
+    build:
+      context: .
+      dockerfile: build/Dockerfile
+    image: claudesite-orchestrator-api
+    container_name: claudesite-worker
+    restart: unless-stopped
+    env_file:
+      - .env
+      - .env.worker
+    command: celery -A app.workers.celery_app worker -l INFO --concurrency=6
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./sites:/app/sites:ro
+      - ./static:/app/static:ro
+      - ./secrets:/root/claudesite-orchestrator/secrets:ro
+      - /var/www:/var/www
+      - /var/claudesite/sites:/var/claudesite/sites:rw
+
+  renderer:
+    build:
+      context: .
+      dockerfile: build/Dockerfile.renderer
+    container_name: claudesite-renderer
+    restart: unless-stopped
+    environment:
+      LOG_LEVEL: info
+    ports:
+      - "127.0.0.1:8090:8090"
+    volumes:
+      - /var/claudesite/sites:/var/claudesite/sites:rw
+
+  mysql:
+    image: mysql:8.4
+    container_name: claudesite-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: claudesite
+      MYSQL_USER: claudesite
+      MYSQL_PASSWORD: change_me
+      MYSQL_ROOT_PASSWORD: root_change_me
+    ports:
+      - "127.0.0.1:3306:3306"
+    volumes:
+      - claudesite_mysql_data:/var/lib/mysql
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot_change_me"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  redis:
+    image: redis:7-alpine
+    container_name: claudesite-redis
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  claudesite_mysql_data:

@@ -1,0 +1,13 @@
+{
+  "name": "claudesite-renderer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Node service that builds per-site React/Vite bundles and SSRs pages.",
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "fastify": "^5.1.0"
+  }
+}
